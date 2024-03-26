@@ -177,3 +177,58 @@ add_item(Item, Company, Price) :-
 remove_item(Item, Company, Price) :-
     retract(item(Item, Company, Price)).
 
+%3- List all items in a specific customer order given customer id and order id
+ getItemsInOrderById(CName,Orderid,Items):-
+ customer(Cid,CName),
+ order(Cid,Orderid,Items).
+
+
+%4- Get the num of items in a specific customer order given customer Name and order id.
+getNumOfItems(Customer, OrderId, Count) :-
+    getItemsInOrderById(Customer, OrderId, Items),
+    len(Items, Count).
+%length of list
+len([], 0).
+len([_|T], L) :-
+len(T, L1),
+L is L1 + 1.
+
+
+%5- Calculate the price of a given order given Customer Name and order id
+calcPriceOfOrder(Cname,Oid,TotalPrice):-
+getItemsInOrderById(Cname,Oid,Items),
+clacListPrice(Items,TotalPrice).
+% calculate price of list of items
+clacListPrice([],0).
+clacListPrice([H|T],P):-
+clacListPrice(T,PT),
+item(H,_,Price),
+P is PT + Price.
+
+
+%6- Given the item name or company name, determine whether we need to boycott or not.
+isBoycott(Item):-
+item(Item, CompanyName, _),
+boycott_company(CompanyName, _).
+
+
+%7-  Given the company name or an item name, find the justification why you need to boycott this company/item
+whyToBoycott(Item, Justification):-
+item(Item, CompanyName, _),
+boycott_company(CompanyName, Justification).
+
+%8-
+
+removeBoycottItemsFromAnOrder(Cname, Oid, NewList) :-
+getItemsInOrderById(Cname, Oid, Items),
+removeBoycott(Items, NewList).
+
+removeBoycott([], []).
+removeBoycott([H|T], L) :-
+isBoycott(H),
+!,
+removeBoycott(T, L).
+removeBoycott([H|T], [H|L]) :-
+removeBoycott(T, L).
+
+
