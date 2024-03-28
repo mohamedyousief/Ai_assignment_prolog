@@ -161,22 +161,6 @@ boycott_company('Mondelez International', 'Mondelez International Inc.  on Nov. 
 boycott_company('Mars', 'Mars will support israeli start-ups and the formation of companies, and will work together with leading israeli academic institutions, such as the Hebrew University, the Weizmann Institute, the Technion, Migall and Tel Hai College, among others, to further Foodtech innovations.').
 
 
-%11- calculate the difference in price between the boycott item and its alternative.
-getTheDifferenceInPriceBetweenItemAndAlternative(Item, Alternative, DiffPrice) :-
-item(Item,_,P1),
-alternative(Item, Alternative),
-item(Alternative,_,P2),
-DiffPrice is P2-P1.
-
-%12-: Insert/Remove (1)item, (2)alternative and (3)new boycott company to/from the knowledge base
-:- dynamic(item/3).
-
-add_item(Item, Company, Price) :-
-    assertz(item(Item, Company, Price)).
-
-remove_item(Item, Company, Price) :-
-    retract(item(Item, Company, Price)).
-
 %3- List all items in a specific customer order given customer id and order id
  getItemsInOrderById(CName,Orderid,Items):-
  customer(Cid,CName),
@@ -185,7 +169,7 @@ remove_item(Item, Company, Price) :-
 
 %4- Get the num of items in a specific customer order given customer Name and order id.
 getNumOfItems(Customer, OrderId, Count) :-
-    getItemsInOrderById(Customer, OrderId, Items),
+getItemsInOrderById(Customer, OrderId, Items),
     len(Items, Count).
 %length of list
 len([], 0).
@@ -198,6 +182,7 @@ L is L1 + 1.
 calcPriceOfOrder(Cname,Oid,TotalPrice):-
 getItemsInOrderById(Cname,Oid,Items),
 clacListPrice(Items,TotalPrice).
+
 % calculate price of list of items
 clacListPrice([],0).
 clacListPrice([H|T],P):-
@@ -217,18 +202,64 @@ whyToBoycott(Item, Justification):-
 item(Item, CompanyName, _),
 boycott_company(CompanyName, Justification).
 
-%8-
 
+%8- Given an username and order ID, remove all the boycott items from this order.
 removeBoycottItemsFromAnOrder(Cname, Oid, NewList) :-
 getItemsInOrderById(Cname, Oid, Items),
 removeBoycott(Items, NewList).
-
+%remove Boycott item from list of orders
 removeBoycott([], []).
 removeBoycott([H|T], L) :-
-isBoycott(H),
-!,
+isBoycott(H),!,
 removeBoycott(T, L).
 removeBoycott([H|T], [H|L]) :-
 removeBoycott(T, L).
 
 
+%9- Given an username and order ID, update the order such that all boycott items are replaced by an alternative (if exists).
+replaceBoycottItemsFromAnOrder(Cname, Oid, NewList):-
+getItemsInOrderById(Cname, Oid, Items),
+replaceBoycott(Items, NewList).
+%reblace boycott item by Alternative
+replaceBoycott([],[]).
+replaceBoycott([H|T],[Alternative|L]):-
+isBoycott(H),
+alternative(H,Alternative),!,
+replaceBoycott(T,L).
+%append item if not boycott
+replaceBoycott([H|T], [H|L]):-
+replaceBoycott(T, L).
+
+%10- Given an username and order ID, calculate the price of the order after replacing all boycott items by its alternative (if it exists).
+calcPriceAfterReplacingBoycottItemsFromAnOrder(Cname, Oid, NewList, TotalPrice):-
+replaceBoycottItemsFromAnOrder(Cname, Oid, NewList),
+clacListPrice(NewList,TotalPrice).
+
+%11- calculate the difference in price between the boycott item and its alternative.
+getTheDifferenceInPriceBetweenItemAndAlternative(Item, Alternative, DiffPrice) :-
+item(Item,_,P1),
+alternative(Item, Alternative),
+item(Alternative,_,P2),
+DiffPrice is P2-P1.
+
+%12-: Insert/Remove (1)item, (2)alternative and (3)new boycott company to/from the knowledge base
+:- dynamic(item/3).
+
+add_item(Item, Company, Price) :-
+    assertz(item(Item, Company, Price)).
+
+remove_item(Item, Company, Price) :-
+    retract(item(Item, Company, Price)).
+
+
+%test cases
+%3- getItemsInOrderById(shahd_ghazal2002,1,Items).
+%4- getNumOfItems(shahd_ghazal2002,2,Count).
+%5- calcPriceOfOrder(shahd_ghazal2002,2,TotalPrice).
+%6- isBoycott(sunbites). ,  isBoycott(biskrem).
+%7- whyToBoycott(dasani, Justification).
+%8- removeBoycottItemsFromAnOrder(abu_juliaa, 1, NewList).
+%9- replaceBoycottItemsFromAnOrder(abu_juliaa, 1, NewList).
+%10- calcPriceAfterReplacingBoycottItemsFromAnOrder(abu_juliaa, 1, NewList, TotalPrice).
+%11- getTheDifferenceInPriceBetweenItemAndAlternative(lipton, A, DiffPrice).
+%12-add_item(alpella_wafer, 'Alpella', 4). , item(alpella_wafer, 'Alpella', 4). ,  remove_item(alpella_wafer, 'Alpella', 4). item(alpella_wafer, 'Alpella', 4).
